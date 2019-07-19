@@ -51,7 +51,7 @@ test:
 	$(GO_BIN) test $(GO_MOD_PARAM) ./...
 
 acceptance-test:
-	bats --tap acceptance.bats
+	bats --tap test/acceptance.bats
 
 ci-test:
 	$(GO_BIN) test $(GO_MOD_PARAM) -race -coverprofile=coverage.txt -covermode=atomic ./...
