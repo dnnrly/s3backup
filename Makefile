@@ -10,7 +10,7 @@ TMP_DIR?=./tmp
 
 BASE_DIR=$(shell pwd)
 
-NAME=abbreviate
+NAME=s3backup
 
 export PATH := ./bin:$(PATH)
 
@@ -30,7 +30,7 @@ clean-deps:
 	rm -rf ./share
 
 ./bin/bats:
-	git clone https://github.com/sstephenson/bats.git ./tmp/bats
+	git clone https://github.com/bats-core/bats-core.git ./tmp/bats
 	./tmp/bats/install.sh .
 
 ./bin/golangci-lint:
@@ -38,6 +38,8 @@ clean-deps:
 
 test-deps: ./bin/bats ./bin/golangci-lint
 	$(GO_BIN) get -v ./...
+	$(GO_BIN) mod tidy
+	GO111MODULE=off $(GO_BIN) get gopkg.in/mikefarah/yq.v2
 	$(GO_BIN) mod tidy
 
 ./bin:
@@ -51,7 +53,7 @@ test:
 	$(GO_BIN) test $(GO_MOD_PARAM) ./...
 
 acceptance-test:
-	bats --tap test/acceptance.bats
+	bats --tap test/*.bats
 
 ci-test:
 	$(GO_BIN) test $(GO_MOD_PARAM) -race -coverprofile=coverage.txt -covermode=atomic ./...
