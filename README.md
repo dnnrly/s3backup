@@ -18,7 +18,7 @@ Of course, but this is more fun.
 ## Installation
 
 ```bash
-git clone https://github.com/dnnrly/
+git clone https://github.com/dnnrly/s3backup
 cd s3backup
 make build
 ```
