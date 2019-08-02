@@ -22,7 +22,7 @@ your S3 bucket, avoiding all of the index performance issues with
 scanning all the files. It identifies all of the meta data you
 need to manage the files that have been backed up.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		index := filemeta.NewIndexFromRoot("", optIndexDirectory)
+		index := filemeta.NewIndexFromRoot("", optIndexDirectory, filemeta.FilePathWalker)
 
 		data, err := index.Encode()
 		if err != nil {

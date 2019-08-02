@@ -18,3 +18,6 @@ s3backup
 *.out
 *.txt
 
+test/*yaml
+test/*/*yaml
+*.swp

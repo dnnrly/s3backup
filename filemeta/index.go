@@ -47,26 +47,31 @@ func (i *Index) Encode() (string, error) {
 	return string(out), nil
 }
 
+type PathWalker func(root string, index *Index) filepath.WalkFunc
+
+func FilePathWalker(root string, index *Index) filepath.WalkFunc {
+	return func(path string, f os.FileInfo, err error) error {
+		if !f.IsDir() {
+			doLog("Add in file to index: %s", path)
+			key := path
+			if root != "" {
+				key = fmt.Sprintf("%s/%s", root, path)
+			}
+			index.Files[path] = Sourcefile{
+				Key: key,
+			}
+		}
+		return err
+	}
+}
+
 // NewIndexFromRoot creates a new Index populated from a filesystem directory
-func NewIndexFromRoot(bucketRoot, path string) *Index {
+func NewIndexFromRoot(bucketRoot, path string, walker PathWalker) *Index {
 	i := &Index{
 		Files: map[string]Sourcefile{},
 	}
 
-	visitor := func(path string, f os.FileInfo, err error) error {
-		if !f.IsDir() {
-			doLog("Add in file to index: %s", path)
-			if bucketRoot != "" {
-				path = fmt.Sprintf("%s/%s", bucketRoot, path)
-			}
-			i.Files[path] = Sourcefile{
-				Key: path,
-			}
-		}
-		return nil
-	}
-
-	filepath.Walk(path, visitor)
+	filepath.Walk(path, walker(bucketRoot, i))
 
 	return i
 }
