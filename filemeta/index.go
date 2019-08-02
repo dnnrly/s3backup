@@ -66,14 +66,17 @@ func FilePathWalker(root string, index *Index) filepath.WalkFunc {
 }
 
 // NewIndexFromRoot creates a new Index populated from a filesystem directory
-func NewIndexFromRoot(bucketRoot, path string, walker PathWalker) *Index {
+func NewIndexFromRoot(bucketRoot, path string, walker PathWalker) (*Index, error) {
 	i := &Index{
 		Files: map[string]Sourcefile{},
 	}
 
-	filepath.Walk(path, walker(bucketRoot, i))
+	err := filepath.Walk(path, walker(bucketRoot, i))
+	if err != nil {
+		return nil, err
+	}
 
-	return i
+	return i, nil
 }
 
 func doLog(format string, args ...interface{}) {

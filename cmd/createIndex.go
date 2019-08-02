@@ -5,12 +5,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/spf13/cobra"
 	"github.com/dnnrly/s3backup/filemeta"
-)
-
-var (
-	optIndexDirectory = "."
+	"github.com/spf13/cobra"
 )
 
 // createIndexCmd represents the createIndex command
@@ -22,7 +18,10 @@ your S3 bucket, avoiding all of the index performance issues with
 scanning all the files. It identifies all of the meta data you
 need to manage the files that have been backed up.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		index := filemeta.NewIndexFromRoot("", optIndexDirectory, filemeta.FilePathWalker)
+		index, err := filemeta.NewIndexFromRoot("", optIndexDirectory, filemeta.FilePathWalker)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Unable to read files for index: %s", err)
+		}
 
 		data, err := index.Encode()
 		if err != nil {
@@ -40,6 +39,4 @@ need to manage the files that have been backed up.`,
 
 func init() {
 	rootCmd.AddCommand(createIndexCmd)
-
-	createIndexCmd.Flags().StringVarP(&optIndexDirectory, "root", "r", optIndexDirectory, "index scan root directory")
 }

@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	cfgFile = "."
-	verbose = false
+	cfgFile           = "."
+	optIndexDirectory = "."
+	verbose           = false
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -39,6 +40,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
+	rootCmd.Flags().StringVarP(&optIndexDirectory, "root", "r", optIndexDirectory, "index scan root directory")
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", cfgFile, fmt.Sprintf("config file (default is %s)", cfgFile))
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", verbose, "Verbose output")
 }
@@ -50,7 +52,7 @@ func initConfig() {
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
-	
+
 		// If a config file is found, read it in.
 		if err := viper.ReadInConfig(); err == nil {
 			fmt.Println("Using config file:", viper.ConfigFileUsed())
