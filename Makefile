@@ -12,12 +12,13 @@ BASE_DIR=$(shell pwd)
 
 NAME=s3backup
 
+export GOPROXY=https://proxy.golang.org
 export PATH := ./bin:$(PATH)
 
 install: deps
 
 build:
-	$(GO_BIN) build -v $(GO_MOD_PARAM)
+	$(GO_BIN) build -v
 
 clean:
 	rm -f $(NAME)
@@ -50,13 +51,13 @@ build-deps: ./bin
 deps: build-deps test-deps
 
 test:
-	$(GO_BIN) test $(GO_MOD_PARAM) ./...
+	$(GO_BIN) test ./...
 
 acceptance-test:
 	bats --tap test/*.bats
 
 ci-test:
-	$(GO_BIN) test $(GO_MOD_PARAM) -race -coverprofile=coverage.txt -covermode=atomic ./...
+	$(GO_BIN) test -race -coverprofile=coverage.txt -covermode=atomic ./...
 
 lint:
 	golangci-lint run
