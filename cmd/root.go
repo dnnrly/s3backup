@@ -13,6 +13,7 @@ import (
 var (
 	cfgFile           = "."
 	optIndexDirectory = "."
+	optIndexFile      = ".s3backup.yaml"
 	verbose           = false
 )
 

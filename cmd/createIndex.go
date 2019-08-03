@@ -29,7 +29,7 @@ need to manage the files that have been backed up.`,
 			os.Exit(1)
 		}
 
-		err = ioutil.WriteFile(".s3backup.yaml", []byte(data), 0644)
+		err = ioutil.WriteFile(optIndexFile, []byte(data), 0644)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Unable to write index file: %s", err)
 			os.Exit(1)
@@ -39,4 +39,6 @@ need to manage the files that have been backed up.`,
 
 func init() {
 	rootCmd.AddCommand(createIndexCmd)
+
+	createIndexCmd.Flags().StringVar(&optIndexFile, "file", optIndexFile, "Location of the index file to write")
 }
