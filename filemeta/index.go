@@ -47,6 +47,18 @@ func (i *Index) Encode() (string, error) {
 	return string(out), nil
 }
 
+func (local *Index) Diff(remote *Index) *Index {
+	diff := &Index{Files: map[string]Sourcefile{}}
+
+	for f, v := range local.Files {
+		if _, found := remote.Files[f]; !found {
+			diff.Files[f] = v
+		}
+	}
+
+	return diff
+}
+
 type PathWalker func(root string, index *Index) filepath.WalkFunc
 
 func FilePathWalker(root string, index *Index) filepath.WalkFunc {

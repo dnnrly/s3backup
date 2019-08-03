@@ -49,3 +49,27 @@ func TestEncode(t *testing.T) {
         key: a/b/c
 `, out)
 }
+
+func TestIndexDifference(t *testing.T) {
+	local := &Index{
+		Files: map[string]Sourcefile{
+			"1": Sourcefile{Key: "a"},
+			"2": Sourcefile{Key: "b"},
+			"3": Sourcefile{Key: "c"},
+			"4": Sourcefile{Key: "d"},
+		},
+	}
+	remote := &Index{
+		Files: map[string]Sourcefile{
+			"1": Sourcefile{Key: "a"},
+			"2": Sourcefile{Key: "b"},
+			"4": Sourcefile{Key: "d"},
+			"5": Sourcefile{Key: "e"},
+		},
+	}
+
+	diff := local.Diff(remote)
+
+	assert.Equal(t, 1, len(diff.Files))
+	assert.Equal(t, "c", diff.Files["3"].Key)
+}
