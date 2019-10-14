@@ -75,9 +75,9 @@ func FilePathWalker(root string, index *Index, hasher PathHasher) filepath.WalkF
 			if root != "" {
 				key = fmt.Sprintf("%s/%s", root, path)
 			}
-			hash, err := hasher(path)
+			hash, errHash := hasher(path)
 			if err != nil {
-				return err
+				return errHash
 			}
 			index.Files[path] = Sourcefile{
 				Key:  key,
