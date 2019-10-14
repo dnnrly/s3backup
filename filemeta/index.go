@@ -90,7 +90,8 @@ func FilePathWalker(root string, index *Index, hasher PathHasher) filepath.WalkF
 
 // FileHasher returns a hash of the contents of a file
 func FileHasher(path string) (string, error) {
-	contents, err := ioutil.ReadFile(path)
+	cleaned := filepath.Clean(path)
+	contents, err := ioutil.ReadFile(cleaned)
 	if err != nil {
 		return "", err
 	}
