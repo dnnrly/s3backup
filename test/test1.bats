@@ -22,4 +22,6 @@ function yqAssert() {
     [ "$(yq.v2 read ${TEST_DIR}/.s3backup.yaml files.dir2/file5.key)" = "dir2/file5" ]
     [ "$(yq.v2 read ${TEST_DIR}/.s3backup.yaml files.dir2/subdir1/file4.key)" = "dir2/subdir1/file4" ]
     [ "$(yq.v2 read ${TEST_DIR}/.s3backup.yaml files.file.key)" = "file" ]
+
+    [ "$(yq.v2 read ${TEST_DIR}/.s3backup.yaml files.dir1/file1.hash)" != "null" ]
 }

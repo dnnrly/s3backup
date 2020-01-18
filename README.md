@@ -2,8 +2,6 @@
 
 Shorten your strings using common abbreviations.
 
-[![build status](https://travis-ci.org/dnnrly/s3backup.svg?branch=master)](https://travis-ci.org/dnnrly/s3backup)
-[![codecov](https://codecov.io/gh/dnnrly/s3backup/branch/master/graph/badge.svg)](https://codecov.io/gh/dnnrly/s3backup)
 [![godoc](https://godoc.org/github.com/dnnrly/s3backup?status.svg)](http://godoc.org/github.com/dnnrly/s3backup)
 [![report card](https://goreportcard.com/badge/github.com/dnnrly/s3backup)](https://goreportcard.com/report/github.com/dnnrly/s3backup)
 

@@ -35,16 +35,18 @@ clean-deps:
 	./tmp/bats/install.sh .
 
 ./bin/golangci-lint:
-	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.17.1
+	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.22.2
 
 test-deps: ./bin/bats ./bin/golangci-lint
-	$(GO_BIN) get -v ./...
-	$(GO_BIN) mod tidy
-	GO111MODULE=off $(GO_BIN) get gopkg.in/mikefarah/yq.v2
-	$(GO_BIN) mod tidy
+	curl -L -o ./bin/yq.v2 https://github.com/mikefarah/yq/releases/download/2.4.0/yq_linux_amd64
+	chmod +x ./bin/yq.v2
+	yq.v2
 
 ./bin:
-	mkdir ./bin
+	mkdir -p ./bin
+
+.tmp:
+	mkdir -p ./tmp
 
 build-deps: ./bin
 
