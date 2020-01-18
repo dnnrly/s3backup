@@ -39,6 +39,7 @@ clean-deps:
 
 test-deps: ./bin/bats ./bin/golangci-lint
 	curl -L -o ./bin/yq.v2 https://github.com/mikefarah/yq/releases/download/2.4.0/yq_linux_amd64
+	chmod +x ./bin/yq.v2
 	yq.v2
 
 ./bin:
