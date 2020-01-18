@@ -35,10 +35,11 @@ clean-deps:
 	./tmp/bats/install.sh .
 
 ./bin/golangci-lint:
-	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.17.1
+	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.22.2
 
 test-deps: ./bin/bats ./bin/golangci-lint
 	curl -L -o ./bin/yq.v2 https://github.com/mikefarah/yq/releases/download/2.4.0/yq_linux_amd64
+	yq.v2
 
 ./bin:
 	mkdir -p ./bin
