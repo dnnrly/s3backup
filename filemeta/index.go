@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -52,21 +53,33 @@ func (i *Index) Encode() (string, error) {
 	return string(out), nil
 }
 
+// Diff finds all entries in this Index that do not exist or are different from
+// the remote entry.
 func (local *Index) Diff(remote *Index) *Index {
 	diff := &Index{Files: map[string]Sourcefile{}}
 
 	for f, v := range local.Files {
 		if _, found := remote.Files[f]; !found {
 			diff.Files[f] = v
+		} else {
+			if v.Hash != remote.Files[f].Hash {
+				diff.Files[f] = v
+			}
 		}
 	}
 
 	return diff
 }
 
+// PathHasher is a function that will hash the file at 'path' location
 type PathHasher func(path string) (string, error)
+
+// PathWalker is a function that can walk a directory tree and populate the Index
+// that is passed in
 type PathWalker func(root string, index *Index, hasher PathHasher) filepath.WalkFunc
 
+// FilePathWalker is a PathWalker that accesses files on the disk when walking a
+// directory tree
 func FilePathWalker(root string, index *Index, hasher PathHasher) filepath.WalkFunc {
 	return func(path string, f os.FileInfo, err error) error {
 		if !f.IsDir() {
@@ -124,4 +137,12 @@ func doLog(format string, args ...interface{}) {
 	if Verbose {
 		log.Printf(format, args...)
 	}
+}
+
+// FileRepository allows you to access files in your remote location
+type FileRepository interface {
+	// GetByKey retrieves the data at a certain location in your store
+	GetByKey(key string) (io.Reader, error)
+	// Save puts the data at a location in your store
+	Save(key string, data io.Reader) error
 }
