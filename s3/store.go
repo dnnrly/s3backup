@@ -13,6 +13,8 @@ import (
 // Config is configuration related to storage in S3
 type Config struct {
 	Bucket string `yaml:"bucket"`
+	Region string `yaml:"region"`
+
 	ID     string `yaml:"id"`
 	Key    string `yaml:"key"`
 	Token  string `yaml:"token"`
@@ -25,13 +27,13 @@ type Store struct {
 }
 
 // NewStore creates a new Store for you
-func NewStore(bucket string) (*Store, error) {
+func NewStore(config Config) (*Store, error) {
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String("eu-west-1"),
 		Credentials: credentials.NewStaticCredentials(
-			"secret-id",
-			"secret-key",
-			"",
+			config.ID,
+			config.Key,
+			config.Secret,
 		),
 	})
 
