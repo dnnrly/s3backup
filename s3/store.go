@@ -29,11 +29,11 @@ type Store struct {
 // NewStore creates a new Store for you
 func NewStore(config Config) (*Store, error) {
 	sess, err := session.NewSession(&aws.Config{
-		Region:      aws.String("eu-west-1"),
+		Region:      aws.String(config.Region),
 		Credentials: credentials.NewStaticCredentials(
 			config.ID,
 			config.Key,
-			config.Secret,
+			config.Token,
 		),
 	})
 
@@ -43,7 +43,7 @@ func NewStore(config Config) (*Store, error) {
 
 	store := &Store{
 		sess:   sess,
-		bucket: bucket,
+		bucket: config.Bucket,
 	}
 
 	return store, nil
