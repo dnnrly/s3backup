@@ -6,11 +6,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/dnnrly/s3backup/filemeta"
+	"github.com/dnnrly/s3backup"
 )
 
 var (
-	cfgFile           = "."
+	cfgFile           = ".config.yaml"
 	optIndexDirectory = "."
 	optIndexFile      = ".s3backup.yaml"
 	verbose           = false
@@ -24,7 +24,7 @@ var rootCmd = &cobra.Command{
 the cloud. It will scan the location(s) that you specify and
 attempt rudimentary de-duplication.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		filemeta.Verbose = verbose
+		s3backup.Verbose = verbose
 	},
 }
 

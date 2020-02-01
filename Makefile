@@ -1,5 +1,7 @@
 GO111MODULE=on
 
+GOPATH=$(go env GOPATH)
+
 CURL_BIN ?= curl
 GO_BIN ?= go
 GORELEASER_BIN ?= goreleaser
@@ -13,14 +15,14 @@ BASE_DIR=$(shell pwd)
 NAME=s3backup
 
 export GOPROXY=https://proxy.golang.org
-export PATH := ./bin:$(PATH)
+export PATH := ./bin:$(GOPATH)/bin:$(PATH)
 
 .PHONY: install
 install: deps
 
 .PHONY: build
 build:
-	$(GO_BIN) build -v
+	$(GO_BIN) build -v ./cmd/s3backup
 
 .PHONY: clean
 clean:
@@ -62,7 +64,7 @@ deps: build-deps test-deps
 
 .PHONY: test
 test:
-	$(GO_BIN) test -json ./... | tparse -all
+	$(GO_BIN) test -json -cover ./... | tparse -all
 
 .PHONY: acceptance-test
 acceptance-test:
@@ -70,7 +72,7 @@ acceptance-test:
 
 .PHONY: ci-test
 ci-test:
-	$(GO_BIN) test -race -coverprofile=coverage.txt -covermode=atomic -json ./... | tparse -all
+	$(GO_BIN) test -race -cover -covermode=atomic -json ./... | tparse -all
 
 .PHONY: lint
 lint:

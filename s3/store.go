@@ -10,6 +10,14 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
+// Config is configuration related to storage in S3
+type Config struct {
+	Bucket string `yaml:"bucket"`
+	ID     string `yaml:"id"`
+	Key    string `yaml:"key"`
+	Token  string `yaml:"token"`
+}
+
 // Store allows you to access your files in an S3 bucket
 type Store struct {
 	sess   *session.Session

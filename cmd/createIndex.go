@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/dnnrly/s3backup/filemeta"
+	"github.com/dnnrly/s3backup"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +18,7 @@ your S3 bucket, avoiding all of the index performance issues with
 scanning all the files. It identifies all of the meta data you
 need to manage the files that have been backed up.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		index, err := filemeta.NewIndexFromRoot("", optIndexDirectory, filemeta.FilePathWalker, filemeta.FileHasher)
+		index, err := s3backup.NewIndexFromRoot("", optIndexDirectory, s3backup.FilePathWalker, s3backup.FileHasher)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Unable to read files for index: %s", err)
 		}

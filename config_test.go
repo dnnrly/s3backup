@@ -1,8 +1,9 @@
-package main
+package s3backup
 
 import (
 	"testing"
 
+	"github.com/dnnrly/s3backup/s3"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,7 +29,7 @@ s3:
   token: "Token-1"
 `
 	expected := &Config{
-		S3: S3Config{
+		S3: s3.Config{
 			Bucket: "bucket-01",
 			ID:     "ID-1",
 			Key:    "Key-1",

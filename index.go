@@ -1,4 +1,4 @@
-package filemeta
+package s3backup
 
 import (
 	"crypto/sha256"
