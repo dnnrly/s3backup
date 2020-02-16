@@ -45,10 +45,9 @@ clean-deps:
 
 test-deps: ./bin/bats ./bin/golangci-lint
 	$(GO_BIN) get github.com/mfridman/tparse
+	$(GO_BIN) get github.com/mikefarah/yq/v3
 	$(GO_BIN) mod tidy
-	curl -L -o ./bin/yq.v2 https://github.com/mikefarah/yq/releases/download/2.4.0/yq_linux_amd64
-	chmod +x ./bin/yq.v2
-	yq.v2
+	yq --version
 
 ./bin:
 	mkdir -p ./bin
