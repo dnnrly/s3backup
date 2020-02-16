@@ -44,6 +44,11 @@ clean-deps:
 	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.22.2
 
 test-deps: ./bin/bats ./bin/golangci-lint
+	go env
+	printenv
+	mkdir -p $(GOPATH)/go/bin
+	mkdir -p $(GOPATH)/go/src
+	mkdir -p $(GOPATH)/go/pkg
 	$(GO_BIN) get github.com/mfridman/tparse
 	$(GO_BIN) get github.com/mikefarah/yq/v3
 	$(GO_BIN) mod tidy
