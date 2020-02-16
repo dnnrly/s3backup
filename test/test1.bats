@@ -1,6 +1,19 @@
 S3_BACKUP=${PWD}/s3backup
 TEST_DIR=test/test1
 
+AWS_CMD="aws --endpoint http://localstack:4572"
+
+setup() {
+    AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test ${AWS_CMD} s3 rm s3://test-bucket --recursive
+    AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test ${AWS_CMD} s3api delete-bucket --bucket test-bucket --region eu-west-1
+    AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test ${AWS_CMD} s3api create-bucket --bucket test-bucket --region eu-west-1
+}
+
+function s3ls () {
+    result="$(AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test ${AWS_CMD} s3 ls test-bucket)"
+    echo "${result}"
+}
+
 function yqAssert() {
     val="$(yq.v2 read $1 $2)"
 
@@ -24,4 +37,6 @@ function yqAssert() {
     [ "$(yq.v2 read ${TEST_DIR}/.s3backup.yaml files.file.key)" = "file" ]
 
     [ "$(yq.v2 read ${TEST_DIR}/.s3backup.yaml files.dir1/file1.hash)" != "null" ]
+
+    [ "$(s3ls | wc -l)" = "7" ]
 }
