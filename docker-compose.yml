@@ -12,8 +12,8 @@ services:
       - START_WEB=0
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
-    volumes:
-      - './.localstack:/tmp/localstack'
+    # volumes:
+    #   - './.localstack:/tmp/localstack'
   test:
     build:
       dockerfile: ./tests.dockerfile

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 
 	"github.com/dnnrly/s3backup/s3"
 	"gopkg.in/yaml.v2"
@@ -26,12 +27,14 @@ func NewConfigFromString(data string) (*Config, error) {
 }
 
 // NewConfigFromFile generates a config object from a file
-func NewConfigFromFile(path string) (*Config, error) {
-	f, err := os.Open(path)
+func NewConfigFromFile(p string) (*Config, error) {
+	f, err := os.Open(path.Clean(p))
 	if err != nil {
 		return nil, fmt.Errorf("unable to open config file: %w", err)
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	b, err := ioutil.ReadAll(f)
 	if err != nil {
