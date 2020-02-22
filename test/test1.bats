@@ -5,14 +5,9 @@ export PATH=${PWD}/scripts:${GOPATH}/bin:${PATH}
 
 setup() {
     rm -rf ${TEST_DIR}/.s3backup.yaml ${TEST_DIR}/dir1 ${TEST_DIR}/dir1 ${TEST_DIR}/file
-    localstack-s3 s3 rm s3://test-bucket --recursive || true
-    localstack-s3 s3api delete-bucket --bucket test-bucket --region eu-west-1 || true
-    localstack-s3 s3api create-bucket --bucket test-bucket --region eu-west-1 # this CAN fail!!
+    localstack-s3 s3 rm s3://${bucket} --recursive || true
 
     createTestFiles
-
-    # localstack-s3 s3api list-object-versions --bucket test-bucket
-    # localstack-s3 s3api list-object-versions --bucket test-bucket |jq '[.[] | .[] | select(.IsLatest == false) | .IsLatest] | length'
 }
 
 createTestFiles() {
@@ -43,13 +38,13 @@ createTestFiles() {
     [ "$(yq read ${TEST_DIR}/.s3backup.yaml files.dir1/file1.hash)" != "null" ]
 }
 
-@test "Updloads to S3" {
+@test "Updloads all files to S3" {
     run $(cd ${TEST_DIR} && ${S3_BACKUP})
 
     [ "$(localstack-s3 s3 ls test-bucket --recursive | wc -l)" = "7" ]
 }
 
-@test "Updloads to S3 without duplicates" {
+@test "Updloads updated files to S3 without duplicates" {
     cd ${TEST_DIR}
     ${S3_BACKUP} || true
     

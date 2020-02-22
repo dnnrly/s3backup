@@ -15,4 +15,8 @@ RUN pip3 install boto3
 
 ENV PATH=/go/bin:${PATH}
 
+ADD scripts/localstack-setup.sh /usr/local/bin/
+
+ENTRYPOINT [ "localstack-setup.sh" ]
+
 CMD /bin/bash
