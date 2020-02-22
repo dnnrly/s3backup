@@ -73,7 +73,7 @@ func doUpload(cmd *cobra.Command, args []string) {
 	indexReader, err := store.GetByKey(indexFile)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok && aerr.Code() == awss3.ErrCodeNoSuchKey {
-			fmt.Println("Remote index does not exist, using empty index")
+			log.Println("Remote index does not exist, using empty index")
 			err = nil
 		} else {
 			fmt.Fprintln(os.Stderr, err.Error())
