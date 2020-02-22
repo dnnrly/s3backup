@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	awss3 "github.com/aws/aws-sdk-go/service/s3"
-    "github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/spf13/cobra"
 
 	"github.com/dnnrly/s3backup"
@@ -53,7 +53,7 @@ func init() {
 
 func doUpload(cmd *cobra.Command, args []string) {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
-	
+
 	log.Println("Reading config")
 	config, err := s3backup.NewConfigFromFile(cfgFile)
 	if err != nil {
@@ -72,8 +72,7 @@ func doUpload(cmd *cobra.Command, args []string) {
 	remoteIndex := &s3backup.Index{}
 	indexReader, err := store.GetByKey(indexFile)
 	if err != nil {
-		if aerr, ok := err.(awserr.Error) ;
-			ok && aerr.Code() == awss3.ErrCodeNoSuchKey {
+		if aerr, ok := err.(awserr.Error); ok && aerr.Code() == awss3.ErrCodeNoSuchKey {
 			fmt.Println("Remote index does not exist, using empty index")
 			err = nil
 		} else {
@@ -92,7 +91,7 @@ func doUpload(cmd *cobra.Command, args []string) {
 
 	log.Println("Creating index")
 	localIndex, err := s3backup.NewIndexFromRoot(
-		"backup",
+		"",
 		optIndexDirectory,
 		s3backup.FilePathWalker,
 		s3backup.FileHasher,

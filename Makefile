@@ -67,7 +67,7 @@ test:
 
 .PHONY: acceptance-test
 acceptance-test:
-	docker-compose run -v ${BASE_DIR}:${BASE_DIR} -w ${BASE_DIR} test bin/bats --tap test/*.bats
+	docker-compose run --rm -v ${BASE_DIR}:${BASE_DIR} -w ${BASE_DIR} test
 
 .PHONY: ci-test
 ci-test:

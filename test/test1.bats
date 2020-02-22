@@ -1,13 +1,33 @@
 S3_BACKUP="${PWD}/s3backup --config ${PWD}/test/config.yaml"
-TEST_DIR=test/test1
+TEST_DIR=${PWD}/test/test1
 
 export PATH=${PWD}/scripts:${GOPATH}/bin:${PATH}
 
 setup() {
-    rm -f ${TEST_DIR}/.s3backup.yaml
-    localstack-s3 s3 rm s3://test-bucket --recursive
-    localstack-s3 s3api delete-bucket --bucket test-bucket --region eu-west-1
-    localstack-s3 s3api create-bucket --bucket test-bucket --region eu-west-1
+    rm -rf ${TEST_DIR}/.s3backup.yaml ${TEST_DIR}/dir1 ${TEST_DIR}/dir1 ${TEST_DIR}/file
+    localstack-s3 s3 rm s3://test-bucket --recursive || true
+    localstack-s3 s3api delete-bucket --bucket test-bucket --region eu-west-1 || true
+    localstack-s3 s3api create-bucket --bucket test-bucket --region eu-west-1 # this CAN fail!!
+
+    createTestFiles
+
+    # localstack-s3 s3api list-object-versions --bucket test-bucket
+    # localstack-s3 s3api list-object-versions --bucket test-bucket |jq '[.[] | .[] | select(.IsLatest == false) | .IsLatest] | length'
+}
+
+createTestFiles() {
+    mkdir -p ${TEST_DIR}/dir1
+    mkdir -p ${TEST_DIR}/dir1/subdir1
+    mkdir -p ${TEST_DIR}/dir1/subdir2
+    mkdir -p ${TEST_DIR}/dir2
+    mkdir -p ${TEST_DIR}/dir2/subdir1
+
+    touch ${TEST_DIR}/dir1/file1
+    touch ${TEST_DIR}/dir1/subdir1/file3
+    touch ${TEST_DIR}/dir1/subdir2/file2
+    touch ${TEST_DIR}/dir2/file5
+    touch ${TEST_DIR}/dir2/subdir1/file4
+    touch ${TEST_DIR}/file
 }
 
 @test "Scans test directory and creates index file" {
@@ -27,4 +47,17 @@ setup() {
     run $(cd ${TEST_DIR} && ${S3_BACKUP})
 
     [ "$(localstack-s3 s3 ls test-bucket --recursive | wc -l)" = "7" ]
+}
+
+@test "Updloads to S3 without duplicates" {
+    cd ${TEST_DIR}
+    ${S3_BACKUP} || true
+    
+    echo "some text" > ${TEST_DIR}/dir2/file-extra
+    echo "more text" >> ${TEST_DIR}/dir1/file1
+
+    run $(cd ${TEST_DIR} && ${S3_BACKUP})
+
+    [ "$(echo ${output} | grep -c Uploading)" = "2" ]
+    [ "$(localstack-s3 s3 ls test-bucket --recursive | wc -l)" = "8" ]
 }
