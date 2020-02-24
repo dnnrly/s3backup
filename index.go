@@ -60,9 +60,11 @@ func (local *Index) Diff(remote *Index) *Index {
 
 	for f, v := range local.Files {
 		if _, found := remote.Files[f]; !found {
+			log.Printf("Found missing file %s\n", f)
 			diff.Files[f] = v
 		} else {
 			if v.Hash != remote.Files[f].Hash {
+				log.Printf("Found updated file %s\n", f)
 				diff.Files[f] = v
 			}
 		}

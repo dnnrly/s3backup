@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 
 echo "Waiting for S3 availability"
+echo ""
 
-sleep 60
+for i in {1..60} ; do
+    echo -e "\e[1A\r${i}/60"
+    sleep 1
+done
+
+echo "Done waiting"
 
 export AWS_ACCESS_KEY_ID=test
 export AWS_SECRET_ACCESS_KEY=test

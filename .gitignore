@@ -26,6 +26,7 @@ dist/
 
 test/*yaml
 test/*/*yaml
+test/test-*
 *.swp
 
 *.env
