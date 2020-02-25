@@ -1,6 +1,6 @@
 s3:
   endpoint: http://localstack:4572
-  bucket: dnnrly-sync-01
+  bucket: test-bucket
   region: eu-west-1
   id: test
   key: test

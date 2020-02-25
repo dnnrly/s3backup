@@ -43,7 +43,7 @@ createTestFiles() {
 @test "Uploads all files to S3" {
     run $(cd ${TEST_DIR} && ${S3_BACKUP})
 
-    [ "$(localstack-s3 s3 ls test-bucket --recursive | wc -l)" = "7" ]
+    [ "$(localstack-s3 s3 ls ${bucket} --recursive | wc -l)" = "7" ]
     
     localstack-s3 s3 cp s3://${bucket}/.index.yaml ${TEST_DIR}/.index.yaml
 
@@ -68,7 +68,7 @@ createTestFiles() {
 
     run $(cd ${TEST_DIR} && ${S3_BACKUP} -v)
 
-    [ "$(localstack-s3 s3 ls test-bucket --recursive | wc -l)" = "8" ]
+    [ "$(localstack-s3 s3 ls ${bucket} --recursive | wc -l)" = "8" ]
     localstack-s3 s3 ls s3://${bucket} --recursive > ${CMP_DIR}/latest
     diff ${CMP_DIR}/orig ${CMP_DIR}/latest > ${CMP_DIR}/diff || true
     [ "$(grep -c '^>' ${CMP_DIR}/diff)" = "3" ]
