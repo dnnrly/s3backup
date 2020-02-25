@@ -1,6 +1,6 @@
 GO111MODULE=on
 
-GOPATH=$(go env GOPATH)
+GOPATH ?= $(go env GOPATH)
 
 CURL_BIN ?= curl
 GO_BIN ?= go
@@ -47,6 +47,7 @@ test-deps: ./bin/bats ./bin/golangci-lint
 	$(GO_BIN) get github.com/mfridman/tparse
 	$(GO_BIN) get github.com/mikefarah/yq/v3
 	$(GO_BIN) mod tidy
+	printenv
 	yq --version
 
 ./bin:

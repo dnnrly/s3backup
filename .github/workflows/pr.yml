@@ -9,7 +9,29 @@ jobs:
       - uses: actions/setup-go@v1
         with:
           go-version: '1.13'
-      - run: make deps test-deps ci-test lint build acceptance-test
+      - name: Install dependencies
+        run: make deps
         env:
           GO111MODULE: on
-          GOPATH: /home/runner/work/s3backup/go
+          GOPATH: /home/runner/go
+      - name: Linting
+        run: make lint
+        env:
+          GO111MODULE: on
+          GOPATH: /home/runner/go
+      - name: Test
+        run: make build
+        env:
+          GO111MODULE: on
+          GOPATH: /home/runner/go
+      - name: Build
+        run: make build
+        env:
+          GO111MODULE: on
+          GOPATH: /home/runner/go
+      - name: Acceptance Test
+        run: make acceptance-test
+        env:
+          GO111MODULE: on
+          GOPATH: /home/runner/go
+      
