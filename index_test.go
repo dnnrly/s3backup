@@ -1,4 +1,4 @@
-package filemeta
+package s3backup
 
 import (
 	"testing"
@@ -78,6 +78,7 @@ func TestIndexDifference(t *testing.T) {
 
 	diff := local.Diff(remote)
 
-	assert.Equal(t, 1, len(diff.Files))
+	assert.Equal(t, 2, len(diff.Files))
+	assert.Equal(t, "321", diff.Files["1"].Hash)
 	assert.Equal(t, "c", diff.Files["3"].Key)
 }

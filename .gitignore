@@ -9,7 +9,13 @@ libexec/
 share/
 tmp/
 dist/
-s3backup
+.localstack/
+
+/s3backup
+/.s3backup.yaml
+/.config.yaml
+/config.yaml
+/config.yaml*
 
 # Test binary, build with `go test -c`
 *.test
@@ -20,4 +26,7 @@ s3backup
 
 test/*yaml
 test/*/*yaml
+test/test-*
 *.swp
+
+*.env
