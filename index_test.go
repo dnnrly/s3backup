@@ -82,3 +82,43 @@ func TestIndexDifference(t *testing.T) {
 	assert.Equal(t, "321", diff.Files["1"].Hash)
 	assert.Equal(t, "c", diff.Files["3"].Key)
 }
+
+func TestIndexAdd(t *testing.T) {
+	index := &Index{
+		Files: map[string]Sourcefile{
+			"1": Sourcefile{Key: "a", Hash: "321"},
+			"2": Sourcefile{Key: "b", Hash: "123"},
+			"3": Sourcefile{Key: "c", Hash: "123"},
+			"4": Sourcefile{Key: "d", Hash: "123"},
+		},
+	}
+
+	index.Add("5", Sourcefile{Key: "e", Hash: "999"})
+
+	assert.Equal(t, 5, len(index.Files))
+}
+
+func TestIndexGetNextN_Many(t *testing.T) {
+	index := &Index{
+		Files: map[string]Sourcefile{
+			"1": Sourcefile{Key: "a", Hash: "321"},
+			"2": Sourcefile{Key: "b", Hash: "123"},
+			"3": Sourcefile{Key: "c", Hash: "123"},
+			"4": Sourcefile{Key: "d", Hash: "123"},
+		},
+	}
+
+	got := index.GetNextN(2)
+
+	assert.Equal(t, 2, len(got.Files))
+	for f := range got.Files {
+		assert.Equal(t, index.Files[f], got.Files[f])
+	}
+}
+
+func TestIndexGetNextN_None(t *testing.T) {
+	got := &Index{
+		Files: map[string]Sourcefile{},
+	}
+	assert.Equal(t, 0, len(got.GetNextN(1).Files))
+}
