@@ -53,6 +53,33 @@ func (i *Index) Encode() (string, error) {
 	return string(out), nil
 }
 
+// Add a single source file to the index
+func (i *Index) Add(f string, src Sourcefile) {
+	i.Files[f] = src
+}
+
+// GetNextN gets any N items from the index
+func (i *Index) GetNextN(n int) *Index {
+	result := &Index{
+		Files: map[string]Sourcefile{},
+	}
+
+	if len(i.Files) == 0 {
+		return result
+	}
+
+	for f, src := range i.Files {
+		if n == 0 {
+			break
+		}
+
+		result.Add(f, src)
+		n--
+	}
+
+	return result
+}
+
 // Diff finds all entries in this Index that do not exist or are different from
 // the remote entry.
 func (local *Index) Diff(remote *Index) *Index {
