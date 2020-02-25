@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	awss3 "github.com/aws/aws-sdk-go/service/s3"
@@ -107,7 +108,7 @@ func readRemoteIndex(config *s3backup.Config, store *s3.Store) *s3backup.Index {
 		}
 	} else {
 		buf := &bytes.Buffer{}
-		buf.ReadFrom(indexReader)
+		_, _ = buf.ReadFrom(indexReader)
 		remoteIndex, err = s3backup.NewIndex(buf.String())
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err.Error())
@@ -136,30 +137,30 @@ func createLocalIndex() *s3backup.Index {
 
 func uploadDifferences(localIndex, remoteIndex *s3backup.Index, store *s3.Store) {
 	diff := localIndex.Diff(remoteIndex)
-	for path, srcFile := range diff.Files {
-		r, err := os.Open(path)
+	for p, srcFile := range diff.Files {
+		r, err := os.Open(path.Clean(p))
 		defer func() {
-			r.Close()
+			_ = r.Close()
 		}()
 
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
-		} else {
-			doLog("Uploading %s as %s\n", path, srcFile.Key)
-			err = store.Save(srcFile.Key, r)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err.Error())
-				os.Exit(1)
-			}
+		}
+
+		doLog("Uploading %s as %s\n", p, srcFile.Key)
+		err = store.Save(srcFile.Key, r)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
 		}
 	}
 }
 
 func uploadIndex(index *s3backup.Index, store *s3.Store) {
-	r, err := index.Encode()
+	r, _ := index.Encode()
 	doLog("Uploading index as %s\n", indexFile)
-	err = store.Save(indexFile, bytes.NewBufferString(r))
+	err := store.Save(indexFile, bytes.NewBufferString(r))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
