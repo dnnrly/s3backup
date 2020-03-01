@@ -1,6 +1,9 @@
 package s3backup
 
 import (
+	"io"
+	"io/ioutil"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -121,4 +124,41 @@ func TestIndexGetNextN_None(t *testing.T) {
 		Files: map[string]Sourcefile{},
 	}
 	assert.Equal(t, 0, len(got.GetNextN(1).Files))
+}
+
+type mockStore struct {
+	Keys []string
+}
+
+func (m *mockStore) Save(key string, data io.Reader) error {
+	m.Keys = append(m.Keys, key)
+	return nil
+}
+
+func TestUploadDifferences(t *testing.T) {
+	index := &Index{
+		Files: map[string]Sourcefile{
+			"1": Sourcefile{Key: "a", Hash: "321"},
+			"2": Sourcefile{Key: "b", Hash: "123"},
+			"3": Sourcefile{Key: "c", Hash: "123"},
+			"4": Sourcefile{Key: "d", Hash: "123"},
+			"5": Sourcefile{Key: "d", Hash: "123"},
+			"6": Sourcefile{Key: "d", Hash: "123"},
+			"7": Sourcefile{Key: "d", Hash: "123"},
+			"8": Sourcefile{Key: "d", Hash: "123"},
+			"9": Sourcefile{Key: "d", Hash: "123"},
+		},
+	}
+
+	getter := func(p string) io.ReadCloser {
+		s := strings.NewReader("")
+		c := ioutil.NopCloser(s)
+		return c
+	}
+
+	mock := &mockStore{Keys: []string{}}
+	UploadDifferences(index, &Index{}, mock, getter)
+
+	assert.Equal(t, 9, len(mock.Keys))
+
 }

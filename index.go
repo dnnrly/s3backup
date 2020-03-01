@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/dnnrly/s3backup/s3"
 	"gopkg.in/yaml.v3"
 )
 
@@ -180,8 +179,14 @@ type FileRepository interface {
 // FileGetter allows you to get the contents of a file
 type FileGetter func(p string) io.ReadCloser
 
+// IndexStore allows you to persist indexed objects
+type IndexStore interface {
+	// Save an indexed object to the specified location
+	Save(key string, data io.Reader) error
+}
+
 // UploadDifferences will upload the files that are missing from the remote index
-func UploadDifferences(localIndex, remoteIndex *Index, store *s3.Store, getFile FileGetter) {
+func UploadDifferences(localIndex, remoteIndex *Index, store IndexStore, getFile FileGetter) {
 	diff := localIndex.Diff(remoteIndex)
 	for p, srcFile := range diff.Files {
 		r := getFile(p)
