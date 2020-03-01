@@ -1,6 +1,7 @@
 package s3backup
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
@@ -16,6 +17,10 @@ import (
 var (
 	// Verbose enables verbose logging in this package
 	Verbose = false
+)
+
+const (
+	indexFile = ".index.yaml"
 )
 
 // Sourcefile represents the metadata for a single backed up file
@@ -186,7 +191,7 @@ type IndexStore interface {
 }
 
 // UploadDifferences will upload the files that are missing from the remote index
-func UploadDifferences(localIndex, remoteIndex *Index, store IndexStore, getFile FileGetter) {
+func UploadDifferences(localIndex, remoteIndex *Index, store IndexStore, getFile FileGetter) error {
 	diff := localIndex.Diff(remoteIndex)
 	for p, srcFile := range diff.Files {
 		r := getFile(p)
@@ -197,8 +202,16 @@ func UploadDifferences(localIndex, remoteIndex *Index, store IndexStore, getFile
 		doLog("Uploading %s as %s\n", p, srcFile.Key)
 		err := store.Save(srcFile.Key, r)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(1)
+			return err
 		}
 	}
+
+	r, _ := localIndex.Encode()
+	doLog("Uploading index as %s\n", indexFile)
+	err := store.Save(indexFile, bytes.NewBufferString(r))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
