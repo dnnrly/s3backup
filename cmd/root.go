@@ -66,8 +66,11 @@ func doUpload(cmd *cobra.Command, args []string) {
 	store := createStore(config.S3)
 	remoteIndex := readRemoteIndex(config, store)
 	localIndex := createLocalIndex()
-	s3backup.UploadDifferences(localIndex, remoteIndex, store, getFile)
-	uploadIndex(localIndex, store)
+	err := s3backup.UploadDifferences(localIndex, remoteIndex, store, getFile)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
 
 	doLog("Finished")
 	os.Exit(0)
@@ -145,14 +148,4 @@ func getFile(p string) io.ReadCloser {
 	}
 
 	return r
-}
-
-func uploadIndex(index *s3backup.Index, store *s3.Store) {
-	r, _ := index.Encode()
-	doLog("Uploading index as %s\n", indexFile)
-	err := store.Save(indexFile, bytes.NewBufferString(r))
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
-	}
 }

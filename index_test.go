@@ -1,6 +1,7 @@
 package s3backup
 
 import (
+	"errors"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -127,11 +128,17 @@ func TestIndexGetNextN_None(t *testing.T) {
 }
 
 type mockStore struct {
-	Keys []string
+	Keys      []string
+	FailAfter int
 }
 
 func (m *mockStore) Save(key string, data io.Reader) error {
+	if len(m.Keys) >= m.FailAfter {
+		return errors.New("oops")
+	}
+
 	m.Keys = append(m.Keys, key)
+
 	return nil
 }
 
@@ -156,9 +163,76 @@ func TestUploadDifferences(t *testing.T) {
 		return c
 	}
 
-	mock := &mockStore{Keys: []string{}}
-	UploadDifferences(index, &Index{}, mock, getter)
+	mock := &mockStore{
+		Keys:      []string{},
+		FailAfter: 99,
+	}
+	err := UploadDifferences(index, &Index{}, mock, getter)
+
+	assert.Equal(t, 10, len(mock.Keys))
+	assert.Equal(t, ".index.yaml", mock.Keys[9])
+	assert.NoError(t, err)
+}
+
+func TestUploadDifferences_ObjectSaveFails(t *testing.T) {
+	index := &Index{
+		Files: map[string]Sourcefile{
+			"1": Sourcefile{Key: "a", Hash: "321"},
+			"2": Sourcefile{Key: "b", Hash: "123"},
+			"3": Sourcefile{Key: "c", Hash: "123"},
+			"4": Sourcefile{Key: "d", Hash: "123"},
+			"5": Sourcefile{Key: "d", Hash: "123"},
+			"6": Sourcefile{Key: "d", Hash: "123"},
+			"7": Sourcefile{Key: "d", Hash: "123"},
+			"8": Sourcefile{Key: "d", Hash: "123"},
+			"9": Sourcefile{Key: "d", Hash: "123"},
+		},
+	}
+
+	getter := func(p string) io.ReadCloser {
+		s := strings.NewReader("")
+		c := ioutil.NopCloser(s)
+		return c
+	}
+
+	mock := &mockStore{
+		Keys:      []string{},
+		FailAfter: 5,
+	}
+	err := UploadDifferences(index, &Index{}, mock, getter)
+
+	assert.Equal(t, 5, len(mock.Keys))
+	assert.Error(t, err)
+}
+
+func TestUploadDifferences_IndexSaveFails(t *testing.T) {
+	index := &Index{
+		Files: map[string]Sourcefile{
+			"1": Sourcefile{Key: "a", Hash: "321"},
+			"2": Sourcefile{Key: "b", Hash: "123"},
+			"3": Sourcefile{Key: "c", Hash: "123"},
+			"4": Sourcefile{Key: "d", Hash: "123"},
+			"5": Sourcefile{Key: "d", Hash: "123"},
+			"6": Sourcefile{Key: "d", Hash: "123"},
+			"7": Sourcefile{Key: "d", Hash: "123"},
+			"8": Sourcefile{Key: "d", Hash: "123"},
+			"9": Sourcefile{Key: "d", Hash: "123"},
+		},
+	}
+
+	getter := func(p string) io.ReadCloser {
+		s := strings.NewReader("")
+		c := ioutil.NopCloser(s)
+		return c
+	}
+
+	mock := &mockStore{
+		Keys:      []string{},
+		FailAfter: 9,
+	}
+	err := UploadDifferences(index, &Index{}, mock, getter)
 
 	assert.Equal(t, 9, len(mock.Keys))
-
+	assert.NotContains(t, ".index.yaml", mock.Keys)
+	assert.Error(t, err)
 }
