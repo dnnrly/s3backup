@@ -48,6 +48,18 @@ func NewIndex(buf string) (*Index, error) {
 	return index, nil
 }
 
+// CopyIndex creates an Index from Yaml
+func CopyIndex(from *Index) *Index {
+	to := &Index{
+		Files: map[string]Sourcefile{},
+	}
+	for k, v := range from.Files {
+		to.Add(k, v)
+	}
+
+	return to
+}
+
 // Encode the index data as Yaml
 func (i *Index) Encode() (string, error) {
 	out, err := yaml.Marshal(i)
@@ -191,8 +203,21 @@ type IndexStore interface {
 }
 
 // UploadDifferences will upload the files that are missing from the remote index
-func UploadDifferences(localIndex, remoteIndex *Index, store IndexStore, getFile FileGetter) error {
+func UploadDifferences(localIndex, remoteIndex *Index, interval int, store IndexStore, getFile FileGetter) error {
 	diff := localIndex.Diff(remoteIndex)
+	toUpload := CopyIndex(remoteIndex)
+	count := 0
+
+	uploadIndex := func() error {
+		r, _ := toUpload.Encode()
+		doLog("Uploading index as %s\n", indexFile)
+		err := store.Save(indexFile, bytes.NewBufferString(r))
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	for p, srcFile := range diff.Files {
 		r := getFile(p)
 		defer func() {
@@ -204,11 +229,20 @@ func UploadDifferences(localIndex, remoteIndex *Index, store IndexStore, getFile
 		if err != nil {
 			return err
 		}
+
+		count++
+		toUpload.Add(p, srcFile)
+		if count == interval {
+			err := uploadIndex()
+			if err != nil {
+				return err
+			}
+
+			count = 0
+		}
 	}
 
-	r, _ := localIndex.Encode()
-	doLog("Uploading index as %s\n", indexFile)
-	err := store.Save(indexFile, bytes.NewBufferString(r))
+	err := uploadIndex()
 	if err != nil {
 		return err
 	}
