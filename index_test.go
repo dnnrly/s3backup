@@ -1,6 +1,7 @@
 package s3backup
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -129,6 +130,7 @@ func TestIndexGetNextN_None(t *testing.T) {
 
 type mockStore struct {
 	Keys      []string
+	Values    []string
 	FailAfter int
 }
 
@@ -138,6 +140,10 @@ func (m *mockStore) Save(key string, data io.Reader) error {
 	}
 
 	m.Keys = append(m.Keys, key)
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(data)
+	m.Values = append(m.Values, buf.String())
 
 	return nil
 }
@@ -149,11 +155,14 @@ func TestUploadDifferences(t *testing.T) {
 			"2": Sourcefile{Key: "b", Hash: "123"},
 			"3": Sourcefile{Key: "c", Hash: "123"},
 			"4": Sourcefile{Key: "d", Hash: "123"},
-			"5": Sourcefile{Key: "d", Hash: "123"},
-			"6": Sourcefile{Key: "d", Hash: "123"},
-			"7": Sourcefile{Key: "d", Hash: "123"},
-			"8": Sourcefile{Key: "d", Hash: "123"},
-			"9": Sourcefile{Key: "d", Hash: "123"},
+			// index
+			"5": Sourcefile{Key: "e", Hash: "123"},
+			"6": Sourcefile{Key: "f", Hash: "123"},
+			"7": Sourcefile{Key: "g", Hash: "123"},
+			"8": Sourcefile{Key: "h", Hash: "123"},
+			// index
+			"9": Sourcefile{Key: "i", Hash: "123"},
+			// index
 		},
 	}
 
@@ -167,10 +176,14 @@ func TestUploadDifferences(t *testing.T) {
 		Keys:      []string{},
 		FailAfter: 99,
 	}
-	err := UploadDifferences(index, &Index{}, mock, getter)
+	err := UploadDifferences(index, &Index{}, 4, mock, getter)
 
-	assert.Equal(t, 10, len(mock.Keys))
+	assert.Equal(t, 12, len(mock.Keys))
+	assert.Equal(t, ".index.yaml", mock.Keys[4])
 	assert.Equal(t, ".index.yaml", mock.Keys[9])
+	assert.True(t, len(mock.Values[4]) < len(mock.Values[9]))
+	assert.Equal(t, ".index.yaml", mock.Keys[11])
+	assert.True(t, len(mock.Values[9]) < len(mock.Values[11]))
 	assert.NoError(t, err)
 }
 
@@ -181,11 +194,11 @@ func TestUploadDifferences_ObjectSaveFails(t *testing.T) {
 			"2": Sourcefile{Key: "b", Hash: "123"},
 			"3": Sourcefile{Key: "c", Hash: "123"},
 			"4": Sourcefile{Key: "d", Hash: "123"},
-			"5": Sourcefile{Key: "d", Hash: "123"},
-			"6": Sourcefile{Key: "d", Hash: "123"},
-			"7": Sourcefile{Key: "d", Hash: "123"},
-			"8": Sourcefile{Key: "d", Hash: "123"},
-			"9": Sourcefile{Key: "d", Hash: "123"},
+			"5": Sourcefile{Key: "e", Hash: "123"},
+			"6": Sourcefile{Key: "f", Hash: "123"},
+			"7": Sourcefile{Key: "g", Hash: "123"},
+			"8": Sourcefile{Key: "h", Hash: "123"},
+			"9": Sourcefile{Key: "i", Hash: "123"},
 		},
 	}
 
@@ -199,7 +212,7 @@ func TestUploadDifferences_ObjectSaveFails(t *testing.T) {
 		Keys:      []string{},
 		FailAfter: 5,
 	}
-	err := UploadDifferences(index, &Index{}, mock, getter)
+	err := UploadDifferences(index, &Index{}, 4, mock, getter)
 
 	assert.Equal(t, 5, len(mock.Keys))
 	assert.Error(t, err)
@@ -230,7 +243,7 @@ func TestUploadDifferences_IndexSaveFails(t *testing.T) {
 		Keys:      []string{},
 		FailAfter: 9,
 	}
-	err := UploadDifferences(index, &Index{}, mock, getter)
+	err := UploadDifferences(index, &Index{}, 12, mock, getter)
 
 	assert.Equal(t, 9, len(mock.Keys))
 	assert.NotContains(t, ".index.yaml", mock.Keys)
