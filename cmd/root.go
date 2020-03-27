@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path"
@@ -65,8 +66,11 @@ func doUpload(cmd *cobra.Command, args []string) {
 	store := createStore(config.S3)
 	remoteIndex := readRemoteIndex(config, store)
 	localIndex := createLocalIndex()
-	uploadDifferences(localIndex, remoteIndex, store)
-	uploadIndex(localIndex, store)
+	err := s3backup.UploadDifferences(localIndex, remoteIndex, 10, store, getFile)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
 
 	doLog("Finished")
 	os.Exit(0)
@@ -135,34 +139,13 @@ func createLocalIndex() *s3backup.Index {
 	return localIndex
 }
 
-func uploadDifferences(localIndex, remoteIndex *s3backup.Index, store *s3.Store) {
-	diff := localIndex.Diff(remoteIndex)
-	for p, srcFile := range diff.Files {
-		r, err := os.Open(path.Clean(p))
-		defer func() {
-			_ = r.Close()
-		}()
+func getFile(p string) io.ReadCloser {
+	r, err := os.Open(path.Clean(p))
 
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(1)
-		}
-
-		doLog("Uploading %s as %s\n", p, srcFile.Key)
-		err = store.Save(srcFile.Key, r)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(1)
-		}
-	}
-}
-
-func uploadIndex(index *s3backup.Index, store *s3.Store) {
-	r, _ := index.Encode()
-	doLog("Uploading index as %s\n", indexFile)
-	err := store.Save(indexFile, bytes.NewBufferString(r))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
+
+	return r
 }

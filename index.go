@@ -1,6 +1,7 @@
 package s3backup
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
@@ -16,6 +17,10 @@ import (
 var (
 	// Verbose enables verbose logging in this package
 	Verbose = false
+)
+
+const (
+	indexFile = ".index.yaml"
 )
 
 // Sourcefile represents the metadata for a single backed up file
@@ -43,6 +48,18 @@ func NewIndex(buf string) (*Index, error) {
 	return index, nil
 }
 
+// CopyIndex creates an Index from Yaml
+func CopyIndex(from *Index) *Index {
+	to := &Index{
+		Files: map[string]Sourcefile{},
+	}
+	for k, v := range from.Files {
+		to.Add(k, v)
+	}
+
+	return to
+}
+
 // Encode the index data as Yaml
 func (i *Index) Encode() (string, error) {
 	out, err := yaml.Marshal(i)
@@ -51,6 +68,33 @@ func (i *Index) Encode() (string, error) {
 	}
 
 	return string(out), nil
+}
+
+// Add a single source file to the index
+func (i *Index) Add(f string, src Sourcefile) {
+	i.Files[f] = src
+}
+
+// GetNextN gets any N items from the index
+func (i *Index) GetNextN(n int) *Index {
+	result := &Index{
+		Files: map[string]Sourcefile{},
+	}
+
+	if len(i.Files) == 0 {
+		return result
+	}
+
+	for f, src := range i.Files {
+		if n == 0 {
+			break
+		}
+
+		result.Add(f, src)
+		n--
+	}
+
+	return result
 }
 
 // Diff finds all entries in this Index that do not exist or are different from
@@ -147,4 +191,61 @@ type FileRepository interface {
 	GetByKey(key string) (io.Reader, error)
 	// Save puts the data at a location in your store
 	Save(key string, data io.Reader) error
+}
+
+// FileGetter allows you to get the contents of a file
+type FileGetter func(p string) io.ReadCloser
+
+// IndexStore allows you to persist indexed objects
+type IndexStore interface {
+	// Save an indexed object to the specified location
+	Save(key string, data io.Reader) error
+}
+
+// UploadDifferences will upload the files that are missing from the remote index
+func UploadDifferences(localIndex, remoteIndex *Index, interval int, store IndexStore, getFile FileGetter) error {
+	diff := localIndex.Diff(remoteIndex)
+	toUpload := CopyIndex(remoteIndex)
+	count := 0
+
+	uploadIndex := func() error {
+		r, _ := toUpload.Encode()
+		doLog("Uploading index as %s\n", indexFile)
+		err := store.Save(indexFile, bytes.NewBufferString(r))
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	for p, srcFile := range diff.Files {
+		r := getFile(p)
+		defer func() {
+			_ = r.Close()
+		}()
+
+		doLog("Uploading %s as %s\n", p, srcFile.Key)
+		err := store.Save(srcFile.Key, r)
+		if err != nil {
+			return err
+		}
+
+		count++
+		toUpload.Add(p, srcFile)
+		if count == interval {
+			err := uploadIndex()
+			if err != nil {
+				return err
+			}
+
+			count = 0
+		}
+	}
+
+	err := uploadIndex()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
