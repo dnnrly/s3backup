@@ -31,8 +31,10 @@ jobs:
       env:
         GO111MODULE: on
     - name: Perform release
-      run: ./bin/goreleaser release
+      uses: goreleaser/goreleaser-action@v1
+      with:
+        version: latest
+        args: release --rm-dist
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GO111MODULE: on
       if: success()
