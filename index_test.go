@@ -249,3 +249,8 @@ func TestUploadDifferences_IndexSaveFails(t *testing.T) {
 	assert.NotContains(t, ".index.yaml", mock.Keys)
 	assert.Error(t, err)
 }
+
+func TestNormalisePath(t *testing.T) {
+	assert.Equal(t, "a/b/c", normalisePath("a/b/c"))
+	assert.Equal(t, "a/b/c", normalisePath("a\\b\\c"))
+}

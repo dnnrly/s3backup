@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -130,9 +131,9 @@ func FilePathWalker(root string, index *Index, hasher PathHasher) filepath.WalkF
 	return func(path string, f os.FileInfo, err error) error {
 		if !f.IsDir() {
 			doLog("Add in file to index: %s", path)
-			key := path
+			key := normalisePath(path)
 			if root != "" {
-				key = fmt.Sprintf("%s/%s", root, path)
+				key = fmt.Sprintf("%s/%s", root, key)
 			}
 			hash, errHash := hasher(path)
 			if err != nil {
@@ -145,6 +146,11 @@ func FilePathWalker(root string, index *Index, hasher PathHasher) filepath.WalkF
 		}
 		return err
 	}
+}
+
+func normalisePath(path string) string {
+	parts := strings.Split(path, "\\")
+	return strings.Join(parts, "/")
 }
 
 // FileHasher returns a hash of the contents of a file
