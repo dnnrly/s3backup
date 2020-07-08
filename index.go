@@ -276,8 +276,8 @@ func UploadDifferences(localIndex, remoteIndex *Index, ParallelLimit int, store 
 	}
 
 	if err := routineGroup.Wait(); err == nil {
-		err := uploadIndex()
-		if err != nil {
+		uploadErr := uploadIndex()
+		if uploadErr != nil {
 			return err
 		}
 	} else {
