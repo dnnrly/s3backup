@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v3"
 )
 
@@ -208,11 +209,33 @@ type IndexStore interface {
 	Save(key string, data io.Reader) error
 }
 
+// Limiter object for limiting concurrency of go routines
+type Limiter struct {
+	done chan bool
+	jobs chan int
+}
+
+//ParallelLimiter helps you create a channel used to limit parallel file uploads
+func ParallelLimiter(ParallelLimit int) *Limiter {
+	limiter := &Limiter{
+		done: make(chan bool),
+		jobs: make(chan int, ParallelLimit),
+	}
+
+	for i := 0; i < ParallelLimit; i++ {
+		limiter.jobs <- i
+	}
+
+	return limiter
+}
+
 // UploadDifferences will upload the files that are missing from the remote index
-func UploadDifferences(localIndex, remoteIndex *Index, interval int, store IndexStore, getFile FileGetter) error {
+func UploadDifferences(localIndex, remoteIndex *Index, ParallelLimit int, store IndexStore, getFile FileGetter) error {
 	diff := localIndex.Diff(remoteIndex)
 	toUpload := CopyIndex(remoteIndex)
-	count := 0
+	routineGroup := new(errgroup.Group)
+	limiter := ParallelLimiter(ParallelLimit)
+	totalFiles := len(diff.Files)
 
 	uploadIndex := func() error {
 		r, _ := toUpload.Encode()
@@ -224,32 +247,40 @@ func UploadDifferences(localIndex, remoteIndex *Index, interval int, store Index
 		return nil
 	}
 
-	for p, srcFile := range diff.Files {
-		r := getFile(p)
-		defer func() {
-			_ = r.Close()
-		}()
-
-		doLog("Uploading %s as %s\n", p, srcFile.Key)
-		err := store.Save(srcFile.Key, r)
-		if err != nil {
-			return err
+	go func() {
+		for i := 0; i < totalFiles; i++ {
+			<-limiter.done
+			limiter.jobs <- i
 		}
+	}()
 
-		count++
-		toUpload.Add(p, srcFile)
-		if count == interval {
-			err := uploadIndex()
+	for p, srcFile := range diff.Files {
+		p, srcFile := p, srcFile // https://golang.org/doc/faq#closures_and_goroutines
+
+		<-limiter.jobs
+		routineGroup.Go(func() error {
+			r := getFile(p)
+			defer func() {
+				_ = r.Close()
+				limiter.done <- true
+			}()
+
+			doLog("Uploading %s as %s\n", p, srcFile.Key)
+			err := store.Save(srcFile.Key, r)
 			if err != nil {
 				return err
 			}
-
-			count = 0
-		}
+			toUpload.Add(p, srcFile)
+			return nil
+		})
 	}
 
-	err := uploadIndex()
-	if err != nil {
+	if err := routineGroup.Wait(); err == nil {
+		err := uploadIndex()
+		if err != nil {
+			return err
+		}
+	} else {
 		return err
 	}
 

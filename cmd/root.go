@@ -66,7 +66,7 @@ func doUpload(cmd *cobra.Command, args []string) {
 	store := createStore(config.S3)
 	remoteIndex := readRemoteIndex(config, store)
 	localIndex := createLocalIndex()
-	err := s3backup.UploadDifferences(localIndex, remoteIndex, 10, store, getFile)
+	err := s3backup.UploadDifferences(localIndex, remoteIndex, 5, store, getFile)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)

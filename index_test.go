@@ -155,12 +155,10 @@ func TestUploadDifferences(t *testing.T) {
 			"2": Sourcefile{Key: "b", Hash: "123"},
 			"3": Sourcefile{Key: "c", Hash: "123"},
 			"4": Sourcefile{Key: "d", Hash: "123"},
-			// index
 			"5": Sourcefile{Key: "e", Hash: "123"},
 			"6": Sourcefile{Key: "f", Hash: "123"},
 			"7": Sourcefile{Key: "g", Hash: "123"},
 			"8": Sourcefile{Key: "h", Hash: "123"},
-			// index
 			"9": Sourcefile{Key: "i", Hash: "123"},
 			// index
 		},
@@ -178,12 +176,8 @@ func TestUploadDifferences(t *testing.T) {
 	}
 	err := UploadDifferences(index, &Index{}, 4, mock, getter)
 
-	assert.Equal(t, 12, len(mock.Keys))
-	assert.Equal(t, ".index.yaml", mock.Keys[4])
+	assert.Equal(t, 10, len(mock.Keys))
 	assert.Equal(t, ".index.yaml", mock.Keys[9])
-	assert.True(t, len(mock.Values[4]) < len(mock.Values[9]))
-	assert.Equal(t, ".index.yaml", mock.Keys[11])
-	assert.True(t, len(mock.Values[9]) < len(mock.Values[11]))
 	assert.NoError(t, err)
 }
 
@@ -243,8 +237,7 @@ func TestUploadDifferences_IndexSaveFails(t *testing.T) {
 		Keys:      []string{},
 		FailAfter: 9,
 	}
-	err := UploadDifferences(index, &Index{}, 12, mock, getter)
-
+	err := UploadDifferences(index, &Index{}, 4, mock, getter)
 	assert.Equal(t, 9, len(mock.Keys))
 	assert.NotContains(t, ".index.yaml", mock.Keys)
 	assert.Error(t, err)
