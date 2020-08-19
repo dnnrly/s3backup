@@ -215,27 +215,48 @@ type Limiter struct {
 	jobs chan int
 }
 
-//ParallelLimiter helps you create a channel used to limit parallel file uploads
-func ParallelLimiter(ParallelLimit int) *Limiter {
+//parallelLimiter helps you create a channel used to limit parallel file uploads
+func parallelLimiter(parallelLimit int) *Limiter {
 	limiter := &Limiter{
 		done: make(chan bool),
-		jobs: make(chan int, ParallelLimit),
+		jobs: make(chan int, parallelLimit),
 	}
 
-	for i := 0; i < ParallelLimit; i++ {
+	for i := 0; i < parallelLimit; i++ {
 		limiter.jobs <- i
 	}
 
 	return limiter
 }
 
-// UploadDifferences will upload the files that are missing from the remote index
-func UploadDifferences(localIndex, remoteIndex *Index, ParallelLimit int, store IndexStore, getFile FileGetter) error {
-	diff := localIndex.Diff(remoteIndex)
-	toUpload := CopyIndex(remoteIndex)
+// Makes batches of local files to be uploaded
+func makeBatch(files *Index, batchSize int) [][]string {
+	var chunks [][]string
+	keySlice := make([]string, 0, len(files.Files))
+
+	for key, _ := range files.Files {
+		keySlice = append(keySlice, key)
+	}
+
+	for i := 0; i < len(keySlice); i += batchSize {
+		end := i + batchSize
+
+		// necessary check to avoid slicing beyond
+		// slice capacity
+		if end > len(keySlice) {
+			end = len(keySlice)
+		}
+
+		chunks = append(chunks, keySlice[i:end])
+	}
+
+	return chunks
+}
+
+// This uploads batches given by UploadDifferences. The files in the batch are uploaded in parallel
+func UploadBatch(diffFiles *Index, batchHash []string, toUpload *Index, store IndexStore, limiter *Limiter, batchSize int, getFile FileGetter) error {
+
 	routineGroup := new(errgroup.Group)
-	limiter := ParallelLimiter(ParallelLimit)
-	totalFiles := len(diff.Files)
 
 	uploadIndex := func() error {
 		r, _ := toUpload.Encode()
@@ -248,14 +269,14 @@ func UploadDifferences(localIndex, remoteIndex *Index, ParallelLimit int, store 
 	}
 
 	go func() {
-		for i := 0; i < totalFiles; i++ {
+		for i := 0; i < batchSize; i++ {
 			<-limiter.done
 			limiter.jobs <- i
 		}
 	}()
 
-	for p, srcFile := range diff.Files {
-		p, srcFile := p, srcFile // https://golang.org/doc/faq#closures_and_goroutines
+	for _, p := range batchHash {
+		p, srcFile := p, diffFiles.Files[p] // https://golang.org/doc/faq#closures_and_goroutines
 
 		<-limiter.jobs
 		routineGroup.Go(func() error {
@@ -282,6 +303,26 @@ func UploadDifferences(localIndex, remoteIndex *Index, ParallelLimit int, store 
 		}
 	} else {
 		return err
+	}
+
+	return nil
+
+}
+
+// UploadDifferences will upload the files that are missing from the remote index
+func UploadDifferences(localIndex, remoteIndex *Index, parallelLimit int, batchSize int, store IndexStore, getFile FileGetter) error {
+	diff := localIndex.Diff(remoteIndex)
+	toUpload := CopyIndex(remoteIndex)
+	limiter := parallelLimiter(parallelLimit)
+
+	batches := makeBatch(diff, batchSize)
+
+	for _, batch := range batches {
+		err := UploadBatch(diff, batch, toUpload, store, limiter, batchSize, getFile)
+		if err != nil {
+			return err
+		}
+
 	}
 
 	return nil
