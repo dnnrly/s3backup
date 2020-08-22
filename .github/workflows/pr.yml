@@ -20,7 +20,7 @@ jobs:
           GO111MODULE: on
           GOPATH: /home/runner/go
       - name: Test
-        run: make build
+        run: make test
         env:
           GO111MODULE: on
           GOPATH: /home/runner/go
