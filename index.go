@@ -234,7 +234,7 @@ func makeBatch(files *Index, batchSize int) [][]string {
 	var chunks [][]string
 	keySlice := make([]string, 0, len(files.Files))
 
-	for key, _ := range files.Files {
+	for key := range files.Files {
 		keySlice = append(keySlice, key)
 	}
 
@@ -275,8 +275,8 @@ func UploadBatch(diffFiles *Index, batchHash []string, toUpload *Index, store In
 		}
 	}()
 
-	for _, p := range batchHash {
-		p, srcFile := p, diffFiles.Files[p] // https://golang.org/doc/faq#closures_and_goroutines
+	for _, fileHash := range batchHash {
+		p, srcFile := fileHash, diffFiles.Files[fileHash] // https://golang.org/doc/faq#closures_and_goroutines
 
 		<-limiter.jobs
 		routineGroup.Go(func() error {
