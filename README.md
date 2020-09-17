@@ -2,6 +2,8 @@
 
 Shorten your strings using common abbreviations.
 
+[![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/W7W414S4U)
+
 [![godoc](https://godoc.org/github.com/dnnrly/s3backup?status.svg)](http://godoc.org/github.com/dnnrly/s3backup)
 [![report card](https://goreportcard.com/badge/github.com/dnnrly/s3backup)](https://goreportcard.com/report/github.com/dnnrly/s3backup)
 
