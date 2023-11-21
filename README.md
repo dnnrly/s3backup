@@ -27,7 +27,7 @@ make build
 
 ```
 $ s3backup --help
-This too backs up your files to S3 so that you can have them in
+This tool backs up your files to S3 so that you can have them in
 the cloud. It will scan the location(s) that you specify and
 attempt rudimentary de-duplication.
 
